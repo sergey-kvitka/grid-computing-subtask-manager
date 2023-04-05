@@ -4,7 +4,9 @@ server:
     context-path: /grid-server
 
 node-properties:
-  execute-method: exec
-  ping-method: ping
+  execute-method: /exec
+  ping-method: /ping
   directory: subtaskJar
   jar-file-name: jar-file.jar
+  builder-url: http://localhost:9500
+  send-result-method: /api/sendSubtaskResult

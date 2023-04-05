@@ -58,6 +58,7 @@ public class NodeService {
     }
 
     public void saveJarFile(MultipartFile jarFile) throws IOException {
+        Files.createDirectories(Paths.get(directoryName));
         BufferedOutputStream stream = new BufferedOutputStream(
                 new FileOutputStream(directoryName + "/" + jarFileName));
         stream.write(jarFile.getBytes());

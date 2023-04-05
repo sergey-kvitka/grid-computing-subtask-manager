@@ -5,6 +5,10 @@ import com.kvitka.subtaskmanager.dto.NodeStatus;
 import com.kvitka.subtaskmanager.dto.SubtaskDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientException;
@@ -19,6 +23,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Service
 @RequiredArgsConstructor
 public class SubtaskDistributionService {
+
+    @Value("${node-properties.builder-url}")
+    private String builderUrl;
+    @Value("${node-properties.send-result-method}")
+    private String sendResultMethod;
+    @Value("${node-properties.execute-method}")
+    private String executeMethod;
 
     private final AtomicBoolean startAgain = new AtomicBoolean();
     private final AtomicBoolean isStarted = new AtomicBoolean();
@@ -87,18 +98,21 @@ public class SubtaskDistributionService {
         new Thread(() -> {
             try {
                 nodeInfo.setStatus(NodeStatus.BUSY);
-                List<String> strings = nodeService.sendSubtaskToNode(
-                        nodeInfo.getUrl() + "/exec",
+                List<String> result = nodeService.sendSubtaskToNode(
+                        nodeInfo.getUrl() + "/" + executeMethod,
                         subtaskDto.getArgs());
 
                 log.info("Subtask execution complete. The result is ready to be sent (result: {}, subtask: {})",
-                        strings, subtaskDto);
+                        result, subtaskDto);
 
                 nodeInfo.setStatus(NodeStatus.FREE);
                 startDistribution();
-//                try { here will be results sending
-//                } catch (Exception ignored) {
-//                }
+                try {
+                    HttpHeaders headers = new HttpHeaders();
+                    headers.setContentType(MediaType.APPLICATION_JSON);
+                    restTemplate.put(builderUrl + sendResultMethod, new HttpEntity<>(result, headers));
+                } catch (Exception ignored) {
+                }
             } catch (ResourceAccessException e) {
                 log.error("Subtask execution failed ({}: {})", e.getClass().getSimpleName(), e.getMessage());
                 subtaskService.addSubtask(subtaskDto);
