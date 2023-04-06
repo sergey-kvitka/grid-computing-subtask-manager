@@ -117,10 +117,12 @@ public class SubtaskDistributionService {
                 log.error("Subtask execution failed ({}: {})", e.getClass().getSimpleName(), e.getMessage());
                 subtaskService.addSubtask(subtaskDto);
                 nodeInfo.setStatus(NodeStatus.UNAVAILABLE);
+                startDistribution();
             } catch (RestClientException | IOException e) {
                 log.error("Subtask execution failed ({}: {})", e.getClass().getSimpleName(), e.getMessage());
                 subtaskService.addSubtask(subtaskDto);
                 nodeInfo.setStatus(NodeStatus.FREE);
+                startDistribution();
             }
         }).start();
     }
